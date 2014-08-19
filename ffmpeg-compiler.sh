@@ -89,13 +89,23 @@ sudo make distclean
 # sudo make install
 # sudo make clean
 
+#libtheora Theora video encoder. Requires libogg.
+cd /usr/local/ffmpeg_sources
+sudo curl -O http://downloads.xiph.org/releases/theora/libtheora-1.1.1.tar.gz
+sudo tar xzvf libtheora-1.1.1.tar.gz
+cd /usr/local/ffmpeg_sources/libtheora-1.1.1
+sudo ./configure --prefix="/usr/local/ffmpeg_build" --with-ogg="/usr/local/ffmpeg_build" --disable-examples --disable-shared --disable-sdltest --disable-vorbistest
+sudo make
+sudo make install
+sudo make distclean
+
 #And finally, FFmpeg
 cd /usr/local/ffmpeg_sources
 sudo git clone --depth 1 git://source.ffmpeg.org/ffmpeg
 cd ffmpeg
 PKG_CONFIG_PATH="/usr/local/ffmpeg_build/lib/pkgconfig"
 export PKG_CONFIG_PATH
-sudo ./configure --prefix="/usr/local/ffmpeg_build" --extra-cflags="-I/usr/local/ffmpeg_build/include" --extra-ldflags="-L/usr/local/ffmpeg_build/lib" --bindir="/usr/local/bin" --extra-libs="-ldl" --enable-gpl --enable-nonfree --enable-libfdk_aac --enable-libmp3lame --enable-libvorbis --enable-libvpx --enable-libx264
+sudo ./configure --prefix="/usr/local/ffmpeg_build" --extra-cflags="-I/usr/local/ffmpeg_build/include" --extra-ldflags="-L/usr/local/ffmpeg_build/lib" --bindir="/usr/local/bin" --extra-libs="-ldl" --enable-gpl --enable-nonfree --enable-libfdk_aac --enable-libmp3lame --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libtheora
 sudo make
 sudo make tools/qt-faststart
 sudo cp -a tools/qt-faststart /usr/bin/
