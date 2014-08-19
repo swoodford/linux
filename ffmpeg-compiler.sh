@@ -2,7 +2,7 @@
 #Script to download ffmpeg components and compile ffmpeg from source
 #All versions current as of 08/19/14
 
-exec &>> ffmpeg-compiler.log
+exec &>> ~/ffmpeg-compiler.log
 #Install packages for dependencies
 sudo yum install -y autoconf automake gcc gcc-c++ git libtool make nasm pkgconfig zlib-devel
 mkdir ~/ffmpeg_sources
