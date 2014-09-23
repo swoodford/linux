@@ -11,3 +11,4 @@ A collection of shell scripts meant to be run in Linux for performing various ta
 - **install-redis-cli.sh** Install the Redis CLI
 - **mysql-backup-local-to-s3.sh** Dump a MySQL database, gzip it then upload to AWS S3
 - **update-rackspace-driveclient.sh** Update Rackspace Driveclient Cloud Backup Agent on Ubuntu
+- **update-rbenv.sh** Update RBENV and plugins, RubyGems, Bundler on a Ruby app webserver
