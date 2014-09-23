@@ -5,7 +5,6 @@ KEY="your New Relic key here"
 
 
 read -r -p "Install New Relic monitoring agent? (y/n) " INSTALL
-  # If Database Alarms
   if [[ $INSTALL =~ ^([yY][eE][sS]|[yY])$ ]]; then
   	sudo rpm -Uvh http://download.newrelic.com/pub/newrelic/el5/i386/newrelic-repo-5-3.noarch.rpm
   	sudo yum install newrelic-sysmond -y
