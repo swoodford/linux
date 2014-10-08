@@ -15,7 +15,6 @@ installedjavaversion=$(java -version 2>&1 | awk '/version/{print $NF}' | cut -c 
 
 if [[ -z $installedjavaversion ]]; then
   echo "Error: Unable to determine installed Java version!"
-  exit 1
 else
   echo "Installed Java Version: "$installedjavaversion
 fi
@@ -28,7 +27,7 @@ else
   echo "Attempting to switch versions using alternatives..."
   sudo alternatives --config java
 
-  read -r -p "Continue to uninstall 1.6 and update Java to 1.7? (y/n) " updatejava
+  read -r -p "Continue install or update Java to 1.7? (y/n) " updatejava
   if [[ $updatejava =~ ^([yY][eE][sS]|[yY])$ ]]; then
     sudo yum remove java-1.6.0-openjdk -y
     sudo yum install java-1.7.0-openjdk -y
@@ -52,7 +51,7 @@ if [[ -z $latestelasticsearchversion ]]; then
   echo "Error: Unable to determine latest Elasticsearch version!"
   exit 1
 else
-  echo "Latest Elasticsearch Version: "$latestelasticsearchversion
+  echo "Latest Elasticsearch Version in GitHub Repo: "$latestelasticsearchversion
 fi
 
 # Determine the installed version of Elasticsearch on the local machine
@@ -68,7 +67,7 @@ fi
 if [[ "$installedelasticsearchversion" == "$latestelasticsearchversion" ]]; then
   echo "Installed Elasticsearch version matches latest version."
 else
-  echo "Need to update Elasticsearch!"
+  echo "Need to install or update Elasticsearch!"
   # echo "Error: Unable to compare versions!"
   # exit 1
   read -r -p "Attempt to update Elasticsearch through yum? (y/n) " updateelasticsearchyum
@@ -91,8 +90,45 @@ else
     #   echo "Skipping Elasticsearch yum update."
   fi
 fi
-read -r -p "Uninstall and update Elasticsearch to 1.2.x? (y/n) " updateelasticsearch
-if [[ $updateelasticsearch =~ ^([yY][eE][sS]|[yY])$ ]]; then
+
+# # Don't install 1.2
+# read -r -p "Uninstall and update Elasticsearch to 1.2.x? (y/n) " updateelasticsearch
+# if [[ $updateelasticsearch =~ ^([yY][eE][sS]|[yY])$ ]]; then
+#   sudo yum remove elasticsearch -y
+#   sleep 6
+
+#   elasticsearchold="/var/log/elasticsearchold"
+#   if [ ! -d "$elasticsearchold" ]; then
+#     sudo mv /var/log/elasticsearch /var/log/elasticsearchold
+#   fi
+
+#   sudo rpm --import http://packages.elasticsearch.org/GPG-KEY-elasticsearch
+
+#   REPO="~/elasticsearch.repo"
+#   if [ -f $REPO ]; then
+#     rm ~/elasticsearch.repo
+#     sudo rm /etc/yum.repos.d/elasticsearch.repo
+#   fi
+
+#   touch ~/elasticsearch.repo
+#   echo "[elasticsearch-1.2]" >> ~/elasticsearch.repo
+#   echo "name=Elasticsearch repository for 1.2.x packages" >> ~/elasticsearch.repo
+#   echo "baseurl=http://packages.elasticsearch.org/elasticsearch/1.2/centos" >> ~/elasticsearch.repo
+#   echo "gpgcheck=1" >> ~/elasticsearch.repo
+#   echo "gpgkey=http://packages.elasticsearch.org/GPG-KEY-elasticsearch" >> ~/elasticsearch.repo
+#   echo "enabled=1" >> ~/elasticsearch.repo
+#   sudo mv ~/elasticsearch.repo /etc/yum.repos.d/
+
+#   sudo yum install elasticsearch -y
+#   sleep 10
+#   sudo service elasticsearch start
+#   sleep 3
+#   sudo /sbin/chkconfig --add elasticsearch
+#   sleep 3
+#   sudo /usr/share/elasticsearch/bin/elasticsearch -d &
+# else
+read -r -p "Uninstall and update Elasticsearch to 1.3.x? (y/n) " updateelasticsearch3
+if [[ $updateelasticsearch3 =~ ^([yY][eE][sS]|[yY])$ ]]; then
   sudo yum remove elasticsearch -y
   sleep 6
 
@@ -110,9 +146,9 @@ if [[ $updateelasticsearch =~ ^([yY][eE][sS]|[yY])$ ]]; then
   fi
 
   touch ~/elasticsearch.repo
-  echo "[elasticsearch-1.2]" >> ~/elasticsearch.repo
-  echo "name=Elasticsearch repository for 1.2.x packages" >> ~/elasticsearch.repo
-  echo "baseurl=http://packages.elasticsearch.org/elasticsearch/1.2/centos" >> ~/elasticsearch.repo
+  echo "[elasticsearch-1.3]" >> ~/elasticsearch.repo
+  echo "name=Elasticsearch repository for 1.3.x packages" >> ~/elasticsearch.repo
+  echo "baseurl=http://packages.elasticsearch.org/elasticsearch/1.3/centos" >> ~/elasticsearch.repo
   echo "gpgcheck=1" >> ~/elasticsearch.repo
   echo "gpgkey=http://packages.elasticsearch.org/GPG-KEY-elasticsearch" >> ~/elasticsearch.repo
   echo "enabled=1" >> ~/elasticsearch.repo
@@ -125,43 +161,8 @@ if [[ $updateelasticsearch =~ ^([yY][eE][sS]|[yY])$ ]]; then
   sudo /sbin/chkconfig --add elasticsearch
   sleep 3
   sudo /usr/share/elasticsearch/bin/elasticsearch -d &
-else
-  read -r -p "Uninstall and update Elasticsearch to 1.3.x? (y/n) " updateelasticsearch3
-  if [[ $updateelasticsearch3 =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    sudo yum remove elasticsearch -y
-    sleep 6
-
-    elasticsearchold="/var/log/elasticsearchold"
-    if [ ! -d "$elasticsearchold" ]; then
-      sudo mv /var/log/elasticsearch /var/log/elasticsearchold
-    fi
-
-    sudo rpm --import http://packages.elasticsearch.org/GPG-KEY-elasticsearch
-
-    REPO="~/elasticsearch.repo"
-    if [ -f $REPO ]; then
-      rm ~/elasticsearch.repo
-      sudo rm /etc/yum.repos.d/elasticsearch.repo
-    fi
-
-    touch ~/elasticsearch.repo
-    echo "[elasticsearch-1.3]" >> ~/elasticsearch.repo
-    echo "name=Elasticsearch repository for 1.3.x packages" >> ~/elasticsearch.repo
-    echo "baseurl=http://packages.elasticsearch.org/elasticsearch/1.3/centos" >> ~/elasticsearch.repo
-    echo "gpgcheck=1" >> ~/elasticsearch.repo
-    echo "gpgkey=http://packages.elasticsearch.org/GPG-KEY-elasticsearch" >> ~/elasticsearch.repo
-    echo "enabled=1" >> ~/elasticsearch.repo
-    sudo mv ~/elasticsearch.repo /etc/yum.repos.d/
-
-    sudo yum install elasticsearch -y
-    sleep 10
-    sudo service elasticsearch start
-    sleep 3
-    sudo /sbin/chkconfig --add elasticsearch
-    sleep 3
-    sudo /usr/share/elasticsearch/bin/elasticsearch -d &
-    fi
-  fi
+fi
+  # fi
 fi
 curl -sX GET http://localhost:9200/
-echo "Completed, exiting!"
+echo "Completed."
