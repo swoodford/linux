@@ -6,9 +6,16 @@ if [[ $INSTALL =~ ^([yY][eE][sS]|[yY])$ ]]; then
 	if [ -d ~/.rbenv ]; then
 		cd ~/.rbenv
 		git pull origin master
+		cd ~/.rbenv/plugins
+		git pull origin master
+		cd ~/.rbenv/plugins/bundler
+		git pull origin master
+		# rbenv bundler on
 		cd ~/.rbenv/plugins/ruby-build
 		git pull origin master
 		cd ~/.rbenv/plugins/rbenv-bundler
+		git pull origin master
+		cd ~/.rbenv/plugins/rbenv-gem-rehash
 		git pull origin master
 		cd ~/.rbenv/plugins/rbenv-vars
 		git pull origin master
