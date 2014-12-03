@@ -1,10 +1,11 @@
 linux
 =======
 
-A collection of shell scripts meant to be run in Linux for performing various tasks
+A collection of shell scripts meant to be run in Linux for automating various tasks
 
 - **disable-internal-mail-routing.sh** disable internal mail routing on a server, required if mail is being sent to the same domain as the server's hostname
 - **dnsimple-dns-record-updater.sh** Determine the current local dynamic IP address then update the A record using DNSimple API
+- **dnsimple-export-zones.sh** Export the zone file for each domain in a DNSimple account
 - **elasticsearch-java-update.sh** Install or update Java and Elasticsearch to the latest versions
 - **elasticsearch-restart.sh** Stop/start Java & Elasticsearch
 - **ffmpeg-compiler.sh** Compile ffmpeg and components from source
