@@ -3,6 +3,11 @@
 
 KEY="your New Relic key here"
 
+# Check if already installed
+if ps ax | grep -q newrelic; then
+	echo "New Relic already installed."
+	exit 1
+fi
 
 read -r -p "Install New Relic monitoring agent? (y/n) " INSTALL
   if [[ $INSTALL =~ ^([yY][eE][sS]|[yY])$ ]]; then
