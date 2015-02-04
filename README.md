@@ -3,6 +3,8 @@ linux
 
 A collection of shell scripts meant to be run in Linux for automating various tasks
 
+[![Build Status](https://travis-ci.org/swoodford/linux.svg?branch=master)](https://travis-ci.org/swoodford/linux)
+
 - **dnsimple-dns-record-updater.sh** Determine the current local dynamic IP address then update the A record using DNSimple API
 - **dnsimple-export-zones.sh** Export the zone file for each domain in a DNSimple account
 - **elasticsearch-java-update.sh** Install or update Java and Elasticsearch to the latest versions
