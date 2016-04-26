@@ -16,7 +16,7 @@ if [[ $CONTINUE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 		# Download Papertrail certificate
 		# sudo wget -O /etc/syslog.papertrail.crt https://papertrailapp.com/tools/syslog.papertrail.crt
 		sudo curl -o /etc/papertrail-bundle.pem https://papertrailapp.com/tools/papertrail-bundle.pem
-		
+
 		# Check MD5
 		md5=$(md5sum /etc/papertrail-bundle.pem | cut -d" " -f1)
 		if ! [ "$md5" = "c75ce425e553e416bde4e412439e3d09" ]; then
@@ -25,14 +25,14 @@ if [[ $CONTINUE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 		else
 			echo "MD5 checksum match!"
 		fi
-			
+	
 
 		# Backup existing rsyslog conf
 		sudo cp /etc/rsyslog.conf /etc/rsyslog.conf.bak
 
 		# Append Papertrail settings to rsyslog conf
 		touch ~/rsyslog.conf
-		
+
 		echo $'\n' >> ~/rsyslog.conf
 		echo "# Begin Papertrail Settings" >> ~/rsyslog.conf
 		echo "\$PreserveFQDN on" >> ~/rsyslog.conf
