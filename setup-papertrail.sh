@@ -8,7 +8,8 @@ if [[ $CONTINUE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 	# Check if Papertrail settings already exist in rsyslog conf to avoid duplicate settings
 	if ! grep -q Papertrail /etc/rsyslog.conf; then
 
-		read -r -p "Enter your Papertrail Log Destination (Domain and Port) " PAPERTRAIL
+		echo "Enter your Papertrail Log Destination (Domain and Port)"
+		read -r -p "Example: logs.papertrailapp.com:12345 " PAPERTRAIL
 
 		# Install required dependency
 		sudo yum install rsyslog-gnutls -y
