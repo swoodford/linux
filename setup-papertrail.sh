@@ -23,7 +23,7 @@ if ! grep -q Papertrail /etc/rsyslog.conf; then
 
 	# Check MD5
 	md5=$(md5sum /etc/papertrail-bundle.pem | cut -d" " -f1)
-	if ! [ "$md5" = "c75ce425e553e416bde4e412439e3d09" ]; then
+	if ! [ "$md5" = "ba3b40a34ec33ac0869fa5b17a0c80fc" ]; then
 		echo "Invalid MD5 checksum."
 		exit 1
 	else
