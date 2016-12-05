@@ -101,7 +101,7 @@ else
 fi
 
 # Download and Install Papertrail’s tiny standalone remote_syslog daemon
-wget -O /home/ec2-user/remote_syslog_linux_amd64.tar.gz https://github.com/papertrail/remote_syslog2/releases/download/v0.17/remote_syslog_linux_amd64.tar.gz
+wget -O /home/ec2-user/remote_syslog_linux_amd64.tar.gz https://github.com/papertrail/remote_syslog2/releases/download/v0.19/remote_syslog_linux_amd64.tar.gz
 tar xzf ./remote_syslog*.tar.gz
 cd remote_syslog
 sudo cp ./remote_syslog /usr/local/bin
