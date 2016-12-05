@@ -2,41 +2,51 @@
 # This script will setup Papertrail on an AWS EC2 server
 # Assumptions: Will be setup using TCP (TLS) for transfering logs, using Nginx/PHP, username ec2-user
 
+# Optionally configure the papertrail host and port here for automated installation of this script:
+# PAPERTRAIL="YOURSUBDOMAIN.papertrailapp.com:YOURPORT"
+
 # read -r -p "Setup Papertrail on this server? (y/n) " CONTINUE
 # if [[ $CONTINUE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
 # Check if Papertrail settings already exist in rsyslog conf to avoid duplicate settings
-if ! grep -q Papertrail /etc/rsyslog.conf; then
+# if ! grep -q Papertrail /etc/rsyslog.conf; then
 
+if [ -z "$PAPERTRAIL" ]; then
 	echo "Enter your Papertrail Log Destination (Domain and Port)"
 	read -r -p "Example: logs.papertrailapp.com:12345 " PAPERTRAIL
+fi
 
-	PAPERTRAILHOST=$(echo $PAPERTRAIL | cut -d: -f1)
-	PAPERTRAILPORT=$(echo $PAPERTRAIL | cut -d: -f2)
+PAPERTRAILHOST=$(echo $PAPERTRAIL | cut -d: -f1)
+PAPERTRAILPORT=$(echo $PAPERTRAIL | cut -d: -f2)
 
-	# Install required dependency
-	sudo yum install rsyslog-gnutls -y
+# Install required dependency
+sudo yum install rsyslog-gnutls -y
 
-	# Download Papertrail certificate
-	sudo curl -o /etc/papertrail-bundle.pem https://papertrailapp.com/tools/papertrail-bundle.pem
+# Download Papertrail certificate
+sudo curl -o /etc/papertrail-bundle.pem https://papertrailapp.com/tools/papertrail-bundle.pem
 
-	# Check MD5
-	md5=$(md5sum /etc/papertrail-bundle.pem | cut -d" " -f1)
-	if ! [ "$md5" = "ba3b40a34ec33ac0869fa5b17a0c80fc" ]; then
-		echo "Invalid MD5 checksum."
-		exit 1
-	else
-		echo "MD5 checksum match!"
-	fi
+# Check MD5
+md5=$(md5sum /etc/papertrail-bundle.pem | cut -d" " -f1)
+if ! [ "$md5" = "ba3b40a34ec33ac0869fa5b17a0c80fc" ]; then
+	echo "Invalid MD5 checksum."
+	exit 1
+else
+	echo "MD5 checksum match!"
+fi
 
-	# Backup existing rsyslog conf
-	sudo cp /etc/rsyslog.conf /etc/rsyslog.conf.bak
+# Backup existing rsyslog conf
+# sudo cp /etc/rsyslog.conf /etc/rsyslog.conf.bak
+
+# Make sure rsyslog is sending with the fully-qualified domain name
+if ! grep -q '$PreserveFQDN on' /etc/rsyslog.conf; then
+	sudo echo '$PreserveFQDN on' >> /etc/rsyslog.conf
+fi
 
 (
 cat << 'EOP'
 
 # Begin Papertrail Settings
-$PreserveFQDN on
+$PreserveFQDN on # have rsyslog send with the fully-qualified domain name
 $DefaultNetstreamDriverCAFile /etc/papertrail-bundle.pem # trust these CAs
 $ActionSendStreamDriver gtls # use gtls netstream driver
 $ActionSendStreamDriverMode 1 # require TLS
@@ -55,29 +65,32 @@ $ActionResumeRetryCount -1
 $ActionQueueSaveOnShutdown on
 $ActionQueueTimeoutEnqueue 10
 $ActionQueueDiscardSeverity 0
-*.*          @@$PAPERTRAIL
 EOP
-) > /home/ec2-user/rsyslog.conf
+) > /home/ec2-user/99-papertrail.conf
+echo "*.*          @@$PAPERTRAIL" >> /home/ec2-user/99-papertrail.conf
 
-	# Get current user
-	# USER=$(whoami)
+# Get current user
+# USER=$(whoami)
 
-	# Append the Papertrail settings to the rsyslog config
-	# sudo bash -c 'cat /home/$USER/rsyslog.conf >> /etc/rsyslog.conf'
-	sudo bash -c 'cat /home/ec2-user/rsyslog.conf >> /etc/rsyslog.conf'
+# Copy the Papertrail settings to the rsyslog.d config includes directory
+# sudo bash -c 'cat /home/$USER/rsyslog.conf >> /etc/rsyslog.conf'
+sudo bash -c 'cp /home/ec2-user/99-papertrail.conf /etc/rsyslog.d/99-papertrail.conf'
 
-	rm /home/ec2-user/rsyslog.conf
+#rm /home/ec2-user/99-papertrail.conf
 
-else
-	echo "Papertrail already setup on this server!  Cancelled."
-	exit 1
+# else
+# 	echo "Papertrail already setup on this server!  Cancelled."
+# 	exit 0
+# fi
+
+if ! [ -f /usr/local/bin/remote_syslog ]; then
+	# Download and Install Papertrail’s tiny standalone remote_syslog daemon
+	wget -O /home/ec2-user/remote_syslog_linux_amd64.tar.gz https://github.com/papertrail/remote_syslog2/releases/download/v0.19/remote_syslog_linux_amd64.tar.gz
+	tar xzf /home/ec2-user/remote_syslog_linux_amd64.tar.gz
+	chown -R ec2-user:ec2-user /home/ec2-user/
+	cd /home/ec2-user/remote_syslog
+	sudo cp ./remote_syslog /usr/local/bin
 fi
-
-# Download and Install Papertrail’s tiny standalone remote_syslog daemon
-wget -O /home/ec2-user/remote_syslog_linux_amd64.tar.gz https://github.com/papertrail/remote_syslog2/releases/download/v0.19/remote_syslog_linux_amd64.tar.gz
-tar xzf /home/ec2-user/remote_syslog_linux_amd64.tar.gz
-cd /home/ec2-user/remote_syslog
-sudo cp ./remote_syslog /usr/local/bin
 
 ###############################################################################################
 ### Configure additional log files to capture
@@ -92,16 +105,26 @@ files:
   - /var/log/php-fpm/*.log
   - /var/log/php-fpm/5.6/*.log
   - /var/log/php-fpm/7.0/*.log
+  - /var/log/varnish/*.log
 destination:
-  host: $PAPERTRAILHOST
-  port: $PAPERTRAILPORT
+EOP
+) > /home/ec2-user/remote_syslog/log_files.yml
+echo "  host: $PAPERTRAILHOST" >> /home/ec2-user/remote_syslog/log_files.yml
+echo "  port: $PAPERTRAILPORT" >> /home/ec2-user/remote_syslog/log_files.yml
+(
+cat << 'EOP'
   protocol: tls
 exclude_patterns:
   - example
 EOP
-) > /home/ec2-user/remote_syslog/log_files.yml
+) >> /home/ec2-user/remote_syslog/log_files.yml
 
 sudo cp /home/ec2-user/remote_syslog/log_files.yml /etc/log_files.yml
+
+
+###############################################################################################
+### Configure remote_syslog2 to run at boot using init.d script
+###############################################################################################
 
 
 (
@@ -222,84 +245,17 @@ EOP
 
 chmod +x /home/ec2-user/remote_syslog.init.d
 sudo mv /home/ec2-user/remote_syslog.init.d /etc/init.d/remote_syslog
-sudo ln -s /etc/init.d/remote_syslog /etc/rc3.d/S30remote_syslog
+if [ ! -f /etc/rc3.d/S30remote_syslog ]; then
+	sudo ln -s /etc/init.d/remote_syslog /etc/rc3.d/S30remote_syslog
+fi
 
 
-###############################################################################################
-### The below environment check is for a Ruby app
-###############################################################################################
+sudo killall -HUP rsyslog rsyslogd
+service remote_syslog start
+sudo /etc/init.d/rsyslog restart
+sudo service rsyslog restart
 
-
-# Check environment and set as variable
-# if [ -d ~/apps/production/current ]; then
-# 	ENVIRONMENT=production
-
-# elif [ -d ~/apps/beta/current ]; then
-# 	ENVIRONMENT=beta
-
-# elif [ -d ~/apps/staging/current ]; then
-# 	ENVIRONMENT=staging
-
-# else
-# 	echo "Failed to find any app directory, Papertrail Setup failed."
-# 	exit 1
-# fi
-
-
-
-###############################################################################################
-### The below settings are the old method to customize the log files that Papertrail aggregates
-###############################################################################################
-
-
-	# Backup existing Papertrail conf
-	# if [ -f /etc/rsyslog.d/90-papertrail.conf ]; then
-	# 	sudo cp /etc/rsyslog.d/90-papertrail.conf /etc/rsyslog.d/90-papertrail.conf.bak
-	# fi
-
-	# Add Papertrail settings for this server
-	# touch ~/90-papertrail.conf
-
-	# echo "\$ModLoad imfile" >> ~/90-papertrail.conf
-	# echo $'\n' >> ~/90-papertrail.conf
-	# echo "# for each local log file path, duplicate the 6 lines below and edit lines 2-4" >> ~/90-papertrail.conf
-	# echo "\$RuleSet papertrail  # use a non-default ruleset (keeps logs out of /var/log/)" >> ~/90-papertrail.conf
-	# echo "\$InputFileName /home/deploy/apps/$ENVIRONMENT/current/log/$ENVIRONMENT.log" >> ~/90-papertrail.conf
-	# echo "\$InputFileTag $ENVIRONMENT.log:" >> ~/90-papertrail.conf
-	# echo "\$InputFileStateFile /var/log/papertrail-$ENVIRONMENT.log" >> ~/90-papertrail.conf
-	# echo "\$InputFilePersistStateInterval 100 # update state file every 100 lines" >> ~/90-papertrail.conf
-	# echo "\$InputRunFileMonitor" >> ~/90-papertrail.conf
-	# echo $'\n' >> ~/90-papertrail.conf
-	# echo "\$RuleSet papertrail  # use a non-default ruleset (keeps logs out of /var/log/)" >> ~/90-papertrail.conf
-	# echo "\$InputFileName /home/deploy/apps/$ENVIRONMENT/current/log/unicorn.log" >> ~/90-papertrail.conf
-	# echo "\$InputFileTag unicorn.log:" >> ~/90-papertrail.conf
-	# echo "\$InputFileStateFile /var/log/papertrail-unicorn.log" >> ~/90-papertrail.conf
-	# echo "\$InputFilePersistStateInterval 100 # update state file every 100 lines" >> ~/90-papertrail.conf
-	# echo "\$InputRunFileMonitor" >> ~/90-papertrail.conf
-	# echo $'\n' >> ~/90-papertrail.conf
-	# echo "\$RuleSet papertrail  # use a non-default ruleset (keeps logs out of /var/log/)" >> ~/90-papertrail.conf
-	# echo "\$InputFileName /home/deploy/apps/$ENVIRONMENT/current/log/sidekiq.log" >> ~/90-papertrail.conf
-	# echo "\$InputFileTag sidekiq.log:" >> ~/90-papertrail.conf
-	# echo "\$InputFileStateFile /var/log/papertrail-sidekiq.log" >> ~/90-papertrail.conf
-	# echo "\$InputFilePersistStateInterval 100 # update state file every 100 lines" >> ~/90-papertrail.conf
-	# echo "\$InputRunFileMonitor" >> ~/90-papertrail.conf
-	# echo $'\n' >> ~/90-papertrail.conf
-	# echo "# destination (see https://papertrailapp.com/systems/setup)" >> ~/90-papertrail.conf
-	# echo "*.* @@$PAPERTRAIL" >> ~/90-papertrail.conf
-	# echo "# for clarity, explicitly discard everything (this is typically not necessary) *.* ~" >> ~/90-papertrail.conf
-	# echo $'\n' >> ~/90-papertrail.conf
-	# echo "# all done. change to default ruleset (RSYSLOG_DefaultRuleset) for any following config" >> ~/90-papertrail.conf
-	# echo "\$RuleSet RSYSLOG_DefaultRuleset" >> ~/90-papertrail.conf
-	# echo $'\n' >> ~/90-papertrail.conf
-
-	# sudo mv ~/90-papertrail.conf /etc/rsyslog.d/
-
-	sudo killall -HUP rsyslog rsyslogd
-	service remote_syslog start
-	sudo /etc/init.d/rsyslog restart
-	sudo service rsyslog restart
-
-	echo "Papertrail Setup Completed."
+echo "Papertrail Setup Completed."
 
 # 	else
 # 		echo "Cancelled."
