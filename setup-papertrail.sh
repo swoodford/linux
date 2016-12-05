@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script will setup Papertrail on an AWS EC2 server
-# Assumptions: Will be setup using TCP (TLS) for transfering logs, using Nginx/PHP 5.6, username ec2-user
+# Assumptions: Will be setup using TCP (TLS) for transfering logs, using Nginx/PHP, username ec2-user
 
 # read -r -p "Setup Papertrail on this server? (y/n) " CONTINUE
 # if [[ $CONTINUE =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -18,7 +18,6 @@ if ! grep -q Papertrail /etc/rsyslog.conf; then
 	sudo yum install rsyslog-gnutls -y
 
 	# Download Papertrail certificate
-	# sudo wget -O /etc/syslog.papertrail.crt https://papertrailapp.com/tools/syslog.papertrail.crt
 	sudo curl -o /etc/papertrail-bundle.pem https://papertrailapp.com/tools/papertrail-bundle.pem
 
 	# Check MD5
@@ -90,8 +89,9 @@ files:
   - /var/log/mysqld.log
   - /var/log/nginx/access.log
   - /var/log/nginx/error.log
-  - /var/log/php-fpm/www-error.log
-  - /var/log/php-fpm/5.6/error.log
+  - /var/log/php-fpm/*.log
+  - /var/log/php-fpm/5.6/*.log
+  - /var/log/php-fpm/7.0/*.log
 destination:
   host: $PAPERTRAILHOST
   port: $PAPERTRAILPORT
