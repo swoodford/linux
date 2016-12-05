@@ -33,32 +33,6 @@ if ! grep -q Papertrail /etc/rsyslog.conf; then
 	# Backup existing rsyslog conf
 	sudo cp /etc/rsyslog.conf /etc/rsyslog.conf.bak
 
-	# Append Papertrail settings to rsyslog conf
-	# touch ~/rsyslog.conf
-
-	# echo $'\n' >> ~/rsyslog.conf
-	# echo "# Begin Papertrail Settings" >> ~/rsyslog.conf
-	# echo "\$PreserveFQDN on" >> ~/rsyslog.conf
-	# echo "\$DefaultNetstreamDriverCAFile /etc/papertrail-bundle.pem # trust these CAs" >> ~/rsyslog.conf
-	# echo "\$ActionSendStreamDriver gtls # use gtls netstream driver" >> ~/rsyslog.conf
-	# echo "\$ActionSendStreamDriverMode 1 # require TLS" >> ~/rsyslog.conf
-	# echo "\$ActionSendStreamDriverAuthMode x509/name # authenticate by hostname" >> ~/rsyslog.conf
-	# echo "\$ActionSendStreamDriverPermittedPeer *.papertrailapp.com" >> ~/rsyslog.conf
-	# echo "\$ActionResumeInterval 10" >> ~/rsyslog.conf
-	# echo "\$WorkDirectory /var/lib/rsyslog # where to place spool files" >> ~/rsyslog.conf
-	# echo "\$ActionQueueSize 100000" >> ~/rsyslog.conf
-	# echo "\$ActionQueueDiscardMark 97500" >> ~/rsyslog.conf
-	# echo "\$ActionQueueHighWaterMark 80000" >> ~/rsyslog.conf
-	# echo "\$ActionQueueType LinkedList" >> ~/rsyslog.conf
-	# echo "\$ActionQueueFileName papertrailqueue" >> ~/rsyslog.conf
-	# echo "\$ActionQueueCheckpointInterval 100" >> ~/rsyslog.conf
-	# echo "\$ActionQueueMaxDiskSpace 2g" >> ~/rsyslog.conf
-	# echo "\$ActionResumeRetryCount -1" >> ~/rsyslog.conf
-	# echo "\$ActionQueueSaveOnShutdown on" >> ~/rsyslog.conf
-	# echo "\$ActionQueueTimeoutEnqueue 10" >> ~/rsyslog.conf
-	# echo "\$ActionQueueDiscardSeverity 0" >> ~/rsyslog.conf
-	# echo "*.*          @@$PAPERTRAIL" >> ~/rsyslog.conf
-
 (
 cat << 'EOP'
 
@@ -102,29 +76,13 @@ fi
 
 # Download and Install Papertrail’s tiny standalone remote_syslog daemon
 wget -O /home/ec2-user/remote_syslog_linux_amd64.tar.gz https://github.com/papertrail/remote_syslog2/releases/download/v0.19/remote_syslog_linux_amd64.tar.gz
-tar xzf ./remote_syslog*.tar.gz
-cd remote_syslog
+tar xzf /home/ec2-user/remote_syslog_linux_amd64.tar.gz
+cd /home/ec2-user/remote_syslog
 sudo cp ./remote_syslog /usr/local/bin
 
 ###############################################################################################
 ### Configure additional log files to capture
 ###############################################################################################
-
-# touch /home/ec2-user/remote_syslog/log_files.yml
-
-# echo "files:" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  - /var/log/mysqld.log" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  - /var/log/nginx/access.log" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  - /var/log/nginx/error.log" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  - /var/log/php-fpm/www-error.log" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  - /var/log/php-fpm/5.6/error.log" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "destination:" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  host: logs4.papertrailapp.com" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  port: 13246" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  protocol: tls" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "exclude_patterns:" >> /home/ec2-user/remote_syslog/log_files.yml
-# echo "  - example" >> /home/ec2-user/remote_syslog/log_files.yml
-
 
 (
 cat << 'EOP'
